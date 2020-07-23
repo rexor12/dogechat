@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:DogeChat"
+             mc:Ignorable="d"
+             x:Class="DogeChat.ChatPage">
+    <ContentPage.Content>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Image Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Aspect="AspectFill">
+                <Image.Source>
+                    <OnPlatform x:TypeArguments="ImageSource">
+                        <On Platform="Android" Value="doge_header.jpg"/>
+                    </OnPlatform>
+                </Image.Source>
+            </Image>
+            <ListView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" ItemsSource="{Binding Path=Messages}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ImageCell ImageSource="{Binding Image}" Text="{Binding Text}"/>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <Entry Grid.Row="2" Grid.Column="0" x:Name="EntryMessage" Placeholder="What are you thinking?" Text="{Binding Path=CurrentText}"/>
+            <Button Grid.Row="2" Grid.Column="1" x:Name="BtnSend" Text="Send" Command="{Binding Path=SendMessageCommand }"/>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

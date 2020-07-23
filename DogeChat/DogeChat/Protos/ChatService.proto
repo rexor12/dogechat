@@ -1,0 +1,39 @@
+﻿syntax = "proto3";
+option csharp_namespace="DogeChat.Network";
+package DogeChat.Network;
+
+service ChatService {
+	rpc Subscribe(stream ClientMessage) returns (stream ServerMessage);
+}
+
+message ClientMessage {
+	oneof messageType {
+		Join join = 1;
+		SendMessage sendMessage = 2;
+	}
+}
+
+message ServerMessage {
+	oneof messageType {
+		UserJoined userJoined= 1;
+		MessageReceived messageReceived= 2;
+	}
+}
+
+message Join {
+	string name = 1;
+}
+
+message UserJoined {
+	string name = 1;
+}
+
+message SendMessage {
+	string message = 1;
+}
+
+message MessageReceived {
+	// TODO Use the GUID assigned by the server to distinguish users with the same name.
+	string name = 1;
+	string message = 2;
+}
