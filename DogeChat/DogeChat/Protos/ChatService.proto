@@ -15,8 +15,8 @@ message ClientMessage {
 
 message ServerMessage {
 	oneof messageType {
-		UserJoined userJoined= 1;
-		MessageReceived messageReceived= 2;
+		UserJoined userJoined = 1;
+		MessageReceived messageReceived = 2;
 	}
 }
 
@@ -25,7 +25,8 @@ message Join {
 }
 
 message UserJoined {
-	string name = 1;
+	string id = 1;
+	string name = 2;
 }
 
 message SendMessage {
@@ -33,7 +34,7 @@ message SendMessage {
 }
 
 message MessageReceived {
-	// TODO Use the GUID assigned by the server to distinguish users with the same name.
-	string name = 1;
-	string message = 2;
+	string id = 1;
+	string name = 2;
+	string message = 3;
 }

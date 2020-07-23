@@ -1,7 +1,8 @@
 ﻿using Android.Util;
-using Grpc.Core;
 using DogeChat.Extensions;
+using DogeChat.Models;
 using DogeChat.Network;
+using Grpc.Core;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
@@ -14,22 +15,21 @@ namespace DogeChat.Droid.Network.Server
     /// </summary>
     public sealed class GrpcChatService : ChatService.ChatServiceBase
     {
-        private readonly ConcurrentDictionary<Guid, IServerChatClient> _clientRepository = new ConcurrentDictionary<Guid, IServerChatClient>();
+        private readonly ConcurrentDictionary<Identifier, IServerChatClient> _clientRepository = new ConcurrentDictionary<Identifier, IServerChatClient>();
 
         /// <inheritdoc cref="ChatService.ChatServiceBase.Subscribe"/>
         public override async Task Subscribe(IAsyncStreamReader<ClientMessage> requestStream, IServerStreamWriter<ServerMessage> responseStream, ServerCallContext context)
         {
-            var clientId = Guid.NewGuid();
+            var clientId = (Identifier)Guid.NewGuid();
             Log.Info(nameof(GrpcChatService), $"A new client '{clientId}' has joined the server.");
 
-            var client = new ServerChatClient(clientId, responseStream);
+            using var client = new ServerChatClient(clientId, responseStream);
             _clientRepository[client.Id] = client;
             var consumer = ConsumeMessagesAsync(client, requestStream, context.CancellationToken);
 
             await consumer.AwaitSafely().ConfigureAwait(false);
 
             _clientRepository.TryRemove(clientId, out _);
-            client.Dispose();
 
             Log.Info(nameof(GrpcChatService), $"The client '{clientId}' has left the server.");
         }

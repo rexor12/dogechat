@@ -1,5 +1,7 @@
 ﻿using Android.Util;
+using DogeChat.Models;
 using DogeChat.Network;
+using DogeChat.Utility;
 using Grpc.Core;
 using System;
 using System.Collections.Generic;
@@ -16,7 +18,7 @@ namespace DogeChat.Droid.Network.Server
         /// <summary>
         /// Gets the unique identifier of the client.
         /// </summary>
-        Guid Id { get; }
+        Identifier Id { get; }
 
         /// <summary>
         /// Sends the given <paramref name="message"/> to the connected client.
@@ -31,7 +33,7 @@ namespace DogeChat.Droid.Network.Server
         /// <param name="message">The <see cref="ClientMessage"/> to be handled.</param>
         /// <param name="clientRepository">The repository used to access the other clients.</param>
         /// <returns>An awaitable <see cref="Task"/> that represents the operation.</returns>
-        Task HandleMessageAsync(ClientMessage message, IReadOnlyDictionary<Guid, IServerChatClient> clientRepository);
+        Task HandleMessageAsync(ClientMessage message, IReadOnlyDictionary<Identifier, IServerChatClient> clientRepository);
     }
 
     /// <summary>
@@ -44,12 +46,20 @@ namespace DogeChat.Droid.Network.Server
         private readonly IAsyncStreamWriter<ServerMessage> _responseStream;
 
         /// <inheritdoc cref="IServerChatClient.Id"/>
-        public Guid Id { get; }
+        public Identifier Id { get; }
 
-        public ServerChatClient(Guid id, IServerStreamWriter<ServerMessage> responseStream)
+        /// <summary>
+        /// Initializes a new instance of <see cref="ServerChatClient"/>.
+        /// </summary>
+        /// <param name="id">The <see cref="Identifier"/> that uniquely identifies this client.</param>
+        /// <param name="responseStream">The <see cref="IServerStreamWriter{T}"/> used to send messages.</param>
+        /// <exception cref="ArgumentNullException">Thrown when the argument's value is null.</exception>
+        public ServerChatClient(Identifier id, IServerStreamWriter<ServerMessage> responseStream)
         {
-            Id = id != Guid.Empty ? id : throw new ArgumentException("The identifier cannot be the default GUID.", nameof(id));
-            _responseStream = responseStream ?? throw new ArgumentNullException(nameof(responseStream));
+            ExceptionHelper.ThrowIfNull(nameof(responseStream), responseStream);
+
+            Id = id;
+            _responseStream = responseStream;
         }
 
         /// <inheritdoc cref="IServerChatClient.SendMessageAsync"/>
@@ -57,7 +67,7 @@ namespace DogeChat.Droid.Network.Server
             _responseStream.WriteAsync(message);
 
         /// <inheritdoc cref="IServerChatClient.HandleMessageAsync"/>
-        public Task HandleMessageAsync(ClientMessage message, IReadOnlyDictionary<Guid, IServerChatClient> clientRepository)
+        public Task HandleMessageAsync(ClientMessage message, IReadOnlyDictionary<Identifier, IServerChatClient> clientRepository)
         {
             switch (message.MessageTypeCase)
             {
@@ -67,6 +77,7 @@ namespace DogeChat.Droid.Network.Server
                     {
                         UserJoined = new UserJoined
                         {
+                            Id = Id,
                             Name = _name
                         }
                     });
@@ -76,6 +87,7 @@ namespace DogeChat.Droid.Network.Server
                     {
                         MessageReceived = new MessageReceived
                         {
+                            Id = Id,
                             Name = _name,
                             Message = message.SendMessage.Message
                         }
@@ -92,7 +104,7 @@ namespace DogeChat.Droid.Network.Server
         {
         }
 
-        private static Task BroadcastAsync(IReadOnlyDictionary<Guid, IServerChatClient> clientRepository, ServerMessage message) =>
+        private static Task BroadcastAsync(IReadOnlyDictionary<Identifier, IServerChatClient> clientRepository, ServerMessage message) =>
             Task.WhenAll(clientRepository.Values.Select(client => client.SendMessageAsync(message)));
     }
 }

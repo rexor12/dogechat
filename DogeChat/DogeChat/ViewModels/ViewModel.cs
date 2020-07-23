@@ -23,7 +23,7 @@ namespace DogeChat.ViewModels
         private string _name = DefaultUserName;
         private string _currentText = string.Empty;
         private int _isDisposed;
-        private readonly Dictionary<string, UserInfo> _users = new Dictionary<string, UserInfo>(); // TODO Use the GUID instead of the name.
+        private readonly Dictionary<string, UserInfo> _users = new Dictionary<string, UserInfo>();
         private readonly INavigation _navigation;
 
         /// <summary>
@@ -147,6 +147,7 @@ namespace DogeChat.ViewModels
         private void JoinAsClient() =>
             JoinServer(_network.Address, _network.Port, Name);
 
+        // TODO Make this method async and await the tasks.
         private void JoinServer(string address, int port, string name)
         {
             var client = DependencyService.Get<IChatClient>();
@@ -161,23 +162,12 @@ namespace DogeChat.ViewModels
             switch (e.Message.MessageTypeCase)
             {
                 case ServerMessage.MessageTypeOneofCase.UserJoined:
-                    _users[e.Message.UserJoined.Name] = new UserInfo
-                    {
-                        Name = e.Message.UserJoined.Name,
-                        Image = "doggo_0.png" // TODO Randomly generated profile image.
-                    };
+                    UpdateUserInfo(e.Message.UserJoined.Id, ui => ui.Name = e.Message.UserJoined.Name);
                     AddMessage(SystemProfileImage, $"New doggo {e.Message.UserJoined.Name} joined the talkz. Much welcomed!");
                     break;
 
                 case ServerMessage.MessageTypeOneofCase.MessageReceived:
-                    if (!_users.TryGetValue(e.Message.MessageReceived.Name, out var userInfo))
-                    {
-                        _users[e.Message.MessageReceived.Name] = userInfo = new UserInfo
-                        {
-                            Name = e.Message.MessageReceived.Name,
-                            Image = "doggo_0.png" // TODO Randomly generated profile image.
-                        };
-                    }
+                    var userInfo = UpdateUserInfo(e.Message.MessageReceived.Id, ui => ui.Name = e.Message.MessageReceived.Name);
                     AddMessage(userInfo.Image, $"{e.Message.MessageReceived.Name} borks: {e.Message.MessageReceived.Message}");
                     break;
 
@@ -219,5 +209,23 @@ namespace DogeChat.ViewModels
         {
             BindingContext = this
         };
+
+        private UserInfo UpdateUserInfo(string userId, Action<UserInfo> onUpdate)
+        {
+            if (_users.TryGetValue(userId, out var userInfo))
+            {
+                onUpdate(userInfo);
+                return userInfo;
+            }
+
+            userInfo = new UserInfo
+            {
+                Image = "doggo_0.png" // TODO Randomly generated profile image.
+            };
+            onUpdate(userInfo);
+            _users[userId] = userInfo;
+
+            return userInfo;
+        }
     }
 }

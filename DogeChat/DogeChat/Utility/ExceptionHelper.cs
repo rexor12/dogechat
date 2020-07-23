@@ -45,7 +45,7 @@ namespace DogeChat.Utility
         }
 
         /// <summary>
-        /// Throws a new <see cref="ArgumentException"/>
+        /// Throws a new <see cref="ArgumentOutOfRangeException"/>
         /// if the given <paramref name="value"/>
         /// of the argument with the given <paramref name="name"/>
         /// falls outside the valid range.
@@ -69,7 +69,7 @@ namespace DogeChat.Utility
         }
 
         /// <summary>
-        /// Throws a new <see cref="ArgumentException"/>
+        /// Throws a new <see cref="ArgumentOutOfRangeException"/>
         /// if the given <paramref name="value"/>
         /// of the argument with the given <paramref name="name"/>
         /// falls outside the valid range.
